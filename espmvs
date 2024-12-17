@@ -1,153 +1,38 @@
-local Player = game:GetService("Players").LocalPlayer
-local Mouse = Player:GetMouse()
-local Camera = game:GetService("Workspace").CurrentCamera
+local ExpanderEnabled = true -- Example condition for match being active, adjust as needed
 
-local function DrawCircle()
-    local c = Drawing.new("Circle")
-    c.Visible = false
-    c.Position = Vector2.new(0, 0)
-    c.Radius = 20
-    c.Color = Color3.fromRGB(0, 255, 255)
-    c.Thickness = 1
-    c.Transparency = 1
-    return c
-end
-
-local function DrawESP(plr)
-    repeat wait() until plr.Character ~= nil and plr.Character:FindFirstChild("Humanoid") ~= nil
-    local circles = {}
-    local R15 = (plr.Character.Humanoid.RigType == Enum.HumanoidRigType.R15) and true or false
-    if R15 then
-        circles = {
-            -- Head Circle (Upper Torso)
-            Head = DrawCircle(),
-            -- Body Circle (Torso)
-            UpperTorso = DrawCircle(),
-            -- Left Arm Circle
-            LeftArm = DrawCircle(),
-            -- Right Arm Circle
-            RightArm = DrawCircle(),
-            -- Left Leg Circle
-            LeftLeg = DrawCircle(),
-            -- Right Leg Circle
-            RightLeg = DrawCircle()
-        }
-    else
-        circles = {
-            -- Head Circle
-            Head = DrawCircle(),
-            -- Body Circle (Torso)
-            Spine = DrawCircle(),
-            -- Left Arm Circle
-            LeftArm = DrawCircle(),
-            -- Right Arm Circle
-            RightArm = DrawCircle(),
-            -- Left Leg Circle
-            LeftLeg = DrawCircle(),
-            -- Right Leg Circle
-            RightLeg = DrawCircle()
-        }
-    end
-    
-    local function Visibility(state)
-        for i, v in pairs(circles) do
-            v.Visible = state
-        end
-    end
-
-    local function Colorize(color)
-        for i, v in pairs(circles) do
-            v.Color = color
-        end
-    end
-
-    local function UpdaterR15()
-        local connection
-        connection = game:GetService("RunService").RenderStepped:Connect(function()
-            if plr.Character ~= nil and plr.Character:FindFirstChild("Humanoid") ~= nil and plr.Character:FindFirstChild("HumanoidRootPart") ~= nil and plr.Character.Humanoid.Health > 0 then
-                local HUM, vis = Camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
-                if vis then
-                    -- Head Circle
-                    local H = Camera:WorldToViewportPoint(plr.Character.Head.Position)
-                    circles.Head.Position = Vector2.new(H.X, H.Y)
-                    circles.Head.Radius = 20  -- Adjust the radius if needed
-
-                    -- Upper Torso Circle
-                    local UT = Camera:WorldToViewportPoint(plr.Character.UpperTorso.Position)
-                    circles.UpperTorso.Position = Vector2.new(UT.X, UT.Y)
-                    circles.UpperTorso.Radius = 25  -- Adjust radius for torso
-
-                    -- Left Arm Circle
-                    local LA = Camera:WorldToViewportPoint(plr.Character.LeftUpperArm.Position)
-                    circles.LeftArm.Position = Vector2.new(LA.X, LA.Y)
-                    circles.LeftArm.Radius = 15  -- Adjust arm circle radius
-
-                    -- Right Arm Circle
-                    local RA = Camera:WorldToViewportPoint(plr.Character.RightUpperArm.Position)
-                    circles.RightArm.Position = Vector2.new(RA.X, RA.Y)
-                    circles.RightArm.Radius = 15  -- Adjust arm circle radius
-
-                    -- Left Leg Circle
-                    local LL = Camera:WorldToViewportPoint(plr.Character.LeftUpperLeg.Position)
-                    circles.LeftLeg.Position = Vector2.new(LL.X, LL.Y)
-                    circles.LeftLeg.Radius = 20  -- Adjust leg circle radius
-
-                    -- Right Leg Circle
-                    local RL = Camera:WorldToViewportPoint(plr.Character.RightUpperLeg.Position)
-                    circles.RightLeg.Position = Vector2.new(RL.X, RL.Y)
-                    circles.RightLeg.Radius = 20  -- Adjust leg circle radius
-                end
-
-                if circles.Head.Visible ~= true then
-                    Visibility(true)
-                end
-            else
-                if circles.Head.Visible ~= false then
-                    Visibility(false)
+function updateESP()
+    while ExpanderEnabled do
+        wait(0.1)
+        for _, player in ipairs(game.Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Team ~= LocalPlayer.Team then
+                local character = player.Character
+                local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+                if rootPart then
+                    -- Display ESP circles or markers here
+                    -- Ensure the ESP is active only in the match, similar to the hitbox logic
+                    -- You can add conditions to check if the match is ongoing
+                    if isInMatch() then
+                        showESP(rootPart)  -- Show ESP on the player
+                    else
+                        hideESP(rootPart)  -- Hide ESP if match is not active
+                    end
                 end
             end
-        end)
-    end
-
-    local function UpdaterR6()
-        local connection
-        connection = game:GetService("RunService").RenderStepped:Connect(function()
-            if plr.Character ~= nil and plr.Character:FindFirstChild("Humanoid") ~= nil and plr.Character:FindFirstChild("HumanoidRootPart") ~= nil and plr.Character.Humanoid.Health > 0 then
-                local HUM, vis = Camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
-                if vis then
-                    local H = Camera:WorldToViewportPoint(plr.Character.Head.Position)
-                    circles.Head.Position = Vector2.new(H.X, H.Y)
-                    circles.Head.Radius = 20  -- Adjust the radius if needed
-
-                    -- For Spine and other body parts, add additional circles similar to the code above for R15
-                end
-
-                if circles.Head.Visible ~= true then
-                    Visibility(true)
-                end
-            else
-                if circles.Head.Visible ~= false then
-                    Visibility(false)
-                end
-            end
-        end)
-    end
-
-    if R15 then
-        coroutine.wrap(UpdaterR15)()
-    else
-        coroutine.wrap(UpdaterR6)()
+        end
     end
 end
 
-for i, v in pairs(game:GetService("Players"):GetPlayers()) do
-    if v.Name ~= Player.Name then
-        DrawESP(v)
-    end
+-- Example function to determine if the player is in the match
+function isInMatch()
+    -- Replace this with your logic to check if the match is ongoing
+    -- Example: Check if match timer is active or certain conditions are met
+    return game:GetService("Players").LocalPlayer:FindFirstChild("InMatch") ~= nil
 end
 
-game.Players.PlayerAdded:Connect(function(newplr)
-    if newplr.Name ~= Player.Name then
-        DrawESP(newplr)
-    end
-end)
+function showESP(rootPart)
+    -- Your code to display the ESP circle or marker
+end
+
+function hideESP(rootPart)
+    -- Your code to hide the ESP circle or marker
+end
