@@ -13,7 +13,6 @@ local ESPSettings = {
 
 -- Function to check if the player is currently in the match
 function isInMatch()
-    -- Replace with your logic to determine if the match is active
     return LocalPlayer.Team ~= nil
 end
 
@@ -31,14 +30,24 @@ function showESP(rootPart, player)
         espMarker.Parent = game.Workspace
         espMarker.Name = "ESPMarker"
         
+        -- Make the ESP marker visible through walls
+        espMarker.Material = Enum.Material.SmoothPlastic
+        espMarker.Transparency = ESPSettings.Transparency
+        espMarker.AlwaysOnTop = true
+        
         -- Save it to the espMarkers table
         espMarkers[player.UserId] = espMarker
     end
     
     -- Position the ESP marker above the player's root part
     local espMarker = espMarkers[player.UserId]
-    espMarker.Position = rootPart.Position + Vector3.new(0, 3, 0)  -- Adjust Y offset
-    espMarker.Transparency = ESPSettings.Transparency  -- Set transparency for the ESP
+    local targetPosition = rootPart.Position + Vector3.new(0, 3, 0)  -- Adjust Y offset
+    
+    -- Use a Tween to smoothly move the ESP marker
+    local tweenInfo = TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
+    local goal = {Position = targetPosition}
+    local tween = game:GetService("TweenService"):Create(espMarker, tweenInfo, goal)
+    tween:Play()
 end
 
 -- Function to hide the ESP for a player
