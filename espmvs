@@ -1,38 +1,66 @@
-local ExpanderEnabled = true -- Example condition for match being active, adjust as needed
+-- Example condition to check if the match is active (you can adjust based on your game logic)
+local ExpanderEnabled = true -- Match is active
+local LocalPlayer = game.Players.LocalPlayer
+local enemyTeam = nil -- You'll need to specify the enemy team here (e.g., check the player's team)
 
 function updateESP()
     while ExpanderEnabled do
         wait(0.1)
-        for _, player in ipairs(game.Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Team ~= LocalPlayer.Team then
-                local character = player.Character
-                local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-                if rootPart then
-                    -- Display ESP circles or markers here
-                    -- Ensure the ESP is active only in the match, similar to the hitbox logic
-                    -- You can add conditions to check if the match is ongoing
-                    if isInMatch() then
-                        showESP(rootPart)  -- Show ESP on the player
-                    else
-                        hideESP(rootPart)  -- Hide ESP if match is not active
+        
+        -- Only proceed if the match is active and we have teams
+        if isInMatch() then
+            for _, player in ipairs(game.Players:GetPlayers()) do
+                -- Ensure it's not the local player and it's an enemy player
+                if player ~= LocalPlayer and player.Team ~= LocalPlayer.Team then
+                    local character = player.Character
+                    local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+                    if rootPart then
+                        showESP(rootPart)  -- Show ESP on enemy players
                     end
                 end
             end
+        else
+            -- If we're not in a match, hide ESP
+            hideESP()
         end
     end
 end
 
--- Example function to determine if the player is in the match
+-- Function to check if the player is currently in the match
 function isInMatch()
-    -- Replace this with your logic to check if the match is ongoing
-    -- Example: Check if match timer is active or certain conditions are met
-    return game:GetService("Players").LocalPlayer:FindFirstChild("InMatch") ~= nil
+    -- Add your own logic here to determine if the match is active
+    -- For example, check if the game has started or if teams are set up
+    return game:GetService("Players").LocalPlayer.Team ~= nil
 end
 
+-- Function to show the ESP
 function showESP(rootPart)
-    -- Your code to display the ESP circle or marker
+    -- Create or update the ESP here
+    local espMarker = rootPart:FindFirstChild("ESPMarker")
+    
+    if not espMarker then
+        -- If the ESP marker doesn't exist, create it
+        espMarker = Instance.new("Part")
+        espMarker.Size = Vector3.new(1, 1, 1)  -- Adjust size as needed
+        espMarker.Shape = Enum.PartType.Ball
+        espMarker.Color = Color3.fromRGB(255, 0, 0)  -- Example: red for enemy
+        espMarker.CanCollide = false
+        espMarker.Anchored = true
+        espMarker.Parent = game.Workspace
+        espMarker.Name = "ESPMarker"
+    end
+    
+    -- Position the ESP marker above the player's root part
+    espMarker.Position = rootPart.Position + Vector3.new(0, 3, 0)  -- Adjust Y offset as needed
+    espMarker.Transparency = 0.5  -- Adjust transparency if you want
 end
 
-function hideESP(rootPart)
-    -- Your code to hide the ESP circle or marker
+-- Function to hide the ESP
+function hideESP()
+    -- Loop through and remove all ESP markers
+    for _, marker in ipairs(game.Workspace:GetChildren()) do
+        if marker.Name == "ESPMarker" then
+            marker:Destroy()
+        end
+    end
 end
