@@ -4,22 +4,28 @@ local ExpanderEnabled = true -- Match is active
 -- Table to keep track of ESP markers for each player
 local espMarkers = {}
 
+-- Settings for ESP markers
+local ESPSettings = {
+    Size = 2, -- Default size of ESP circle
+    Transparency = 0.5, -- Default transparency of ESP
+    Color = Color3.fromRGB(255, 0, 0), -- Default color of ESP for enemy team (red)
+}
+
 -- Function to check if the player is currently in the match
 function isInMatch()
     -- Replace with your logic to determine if the match is active
-    -- Example: Check if both teams exist
     return LocalPlayer.Team ~= nil
 end
 
--- Function to show the ESP
+-- Function to show the ESP for players on the enemy team
 function showESP(rootPart, player)
     -- Check if the ESP marker already exists for this player
     if not espMarkers[player.UserId] then
         -- If the ESP marker doesn't exist, create it
         local espMarker = Instance.new("Part")
-        espMarker.Size = Vector3.new(2, 2, 2)  -- Adjust size as needed
+        espMarker.Size = Vector3.new(ESPSettings.Size, ESPSettings.Size, ESPSettings.Size)  -- Adjust size
         espMarker.Shape = Enum.PartType.Ball
-        espMarker.Color = Color3.fromRGB(255, 0, 0)  -- Example: red for enemy
+        espMarker.Color = ESPSettings.Color  -- Set color for the enemy team
         espMarker.CanCollide = false
         espMarker.Anchored = true
         espMarker.Parent = game.Workspace
@@ -31,11 +37,11 @@ function showESP(rootPart, player)
     
     -- Position the ESP marker above the player's root part
     local espMarker = espMarkers[player.UserId]
-    espMarker.Position = rootPart.Position + Vector3.new(0, 3, 0)  -- Adjust Y offset as needed
-    espMarker.Transparency = 0.5  -- Adjust transparency if you want
+    espMarker.Position = rootPart.Position + Vector3.new(0, 3, 0)  -- Adjust Y offset
+    espMarker.Transparency = ESPSettings.Transparency  -- Set transparency for the ESP
 end
 
--- Function to hide the ESP
+-- Function to hide the ESP for a player
 function hideESP(player)
     -- Check if the ESP marker exists for this player
     local espMarker = espMarkers[player.UserId]
@@ -53,7 +59,7 @@ function updateESP()
         -- Only proceed if the match is active and we have teams
         if isInMatch() then
             for _, player in ipairs(game.Players:GetPlayers()) do
-                -- Ensure it's not the local player and it's an enemy player
+                -- Check if it's an enemy player (player is not LocalPlayer and on a different team)
                 if player ~= LocalPlayer and player.Team ~= LocalPlayer.Team then
                     local character = player.Character
                     if character then
