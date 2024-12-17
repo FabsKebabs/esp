@@ -16,8 +16,6 @@ end
 local function CreateOutlineESP(player)
     if player == LocalPlayer then return end
 
-    local outlineLines = {}
-
     -- Get the parts to outline on the character
     local function GetCharacterParts(character)
         local parts = {}
@@ -29,7 +27,38 @@ local function CreateOutlineESP(player)
         return parts
     end
 
-    -- Create outline lines around a player's character
+    -- Store all lines we create so we can remove them later
+    local outlineLines = {}
+
+    -- Draw a line between two parts of the character
+    local function DrawOutlineLine(fromPart, toPart)
+        local line = DrawLine()
+        table.insert(outlineLines, line)
+
+        local function UpdateLine()
+            RunService.RenderStepped:Connect(function()
+                if fromPart and toPart then
+                    local fromPos, fromOnScreen = Camera:WorldToViewportPoint(fromPart.Position)
+                    local toPos, toOnScreen = Camera:WorldToViewportPoint(toPart.Position)
+
+                    -- Only show line if both parts are visible on screen
+                    if fromOnScreen and toOnScreen then
+                        line.Visible = true
+                        line.From = Vector2.new(fromPos.X, fromPos.Y)
+                        line.To = Vector2.new(toPos.X, toPos.Y)
+                    else
+                        line.Visible = false
+                    end
+                else
+                    line.Visible = false
+                end
+            end)
+        end
+
+        coroutine.wrap(UpdateLine)()
+    end
+
+    -- Create outline for each player's character
     local function CreateCharacterOutline(character)
         local parts = GetCharacterParts(character)
         local head, torso, leftLeg, rightLeg, leftArm, rightArm
@@ -44,34 +73,7 @@ local function CreateOutlineESP(player)
             if part.Name == "RightArm" then rightArm = part end
         end
 
-        -- Draw lines connecting parts to form an outline
-        local function DrawOutlineLine(fromPart, toPart)
-            local line = DrawLine()
-            table.insert(outlineLines, line)
-
-            local function UpdateLine()
-                RunService.RenderStepped:Connect(function()
-                    if fromPart and toPart then
-                        local fromPos, fromOnScreen = Camera:WorldToViewportPoint(fromPart.Position)
-                        local toPos, toOnScreen = Camera:WorldToViewportPoint(toPart.Position)
-
-                        if fromOnScreen and toOnScreen then
-                            line.Visible = true
-                            line.From = Vector2.new(fromPos.X, fromPos.Y)
-                            line.To = Vector2.new(toPos.X, toPos.Y)
-                        else
-                            line.Visible = false
-                        end
-                    else
-                        line.Visible = false
-                    end
-                end)
-            end
-
-            coroutine.wrap(UpdateLine)()
-        end
-
-        -- Draw lines connecting the character parts to form an outline
+        -- Draw lines connecting the main body parts to form a structured outline
         if head and torso then
             DrawOutlineLine(head, torso)
         end
@@ -95,7 +97,7 @@ local function CreateOutlineESP(player)
         end
     end
 
-    -- Update outline when the character respawns
+    -- Update the outline when the player spawns
     player.CharacterAdded:Connect(function(character)
         CreateCharacterOutline(character)
     end)
