@@ -12,12 +12,13 @@ local function DrawLine()
     return line
 end
 
+-- Create Outline ESP for a player
 local function CreateOutlineESP(player)
     if player == LocalPlayer then return end
 
-    -- Initialize the outline lines
     local outlineLines = {}
-    
+
+    -- Get the parts to outline on the character
     local function GetCharacterParts(character)
         local parts = {}
         for _, part in pairs(character:GetChildren()) do
@@ -28,27 +29,36 @@ local function CreateOutlineESP(player)
         return parts
     end
 
-    -- Create lines for each part of the character
+    -- Create outline lines around a player's character
     local function CreateCharacterOutline(character)
         local parts = GetCharacterParts(character)
-        
+        local head, torso, leftLeg, rightLeg, leftArm, rightArm
+
+        -- Fetch specific parts
         for _, part in pairs(parts) do
+            if part.Name == "Head" then head = part end
+            if part.Name == "UpperTorso" or part.Name == "Torso" then torso = part end
+            if part.Name == "LeftLeg" then leftLeg = part end
+            if part.Name == "RightLeg" then rightLeg = part end
+            if part.Name == "LeftArm" then leftArm = part end
+            if part.Name == "RightArm" then rightArm = part end
+        end
+
+        -- Draw lines connecting parts to form an outline
+        local function DrawOutlineLine(fromPart, toPart)
             local line = DrawLine()
             table.insert(outlineLines, line)
 
-            -- Connect the parts with lines to form an outline
-            local function UpdateOutline()
+            local function UpdateLine()
                 RunService.RenderStepped:Connect(function()
-                    if character and character:FindFirstChild(part.Name) then
-                        local partPos, onScreen = Camera:WorldToViewportPoint(part.Position)
+                    if fromPart and toPart then
+                        local fromPos, fromOnScreen = Camera:WorldToViewportPoint(fromPart.Position)
+                        local toPos, toOnScreen = Camera:WorldToViewportPoint(toPart.Position)
 
-                        if onScreen then
+                        if fromOnScreen and toOnScreen then
                             line.Visible = true
-                            line.From = Vector2.new(partPos.X, partPos.Y)
-                            -- Adjust line based on position relative to camera view
-                            -- (This part may require further adjustments for a smooth outline)
-                            -- Example: lines connecting character body parts to outline
-                            -- You can adjust the "From" and "To" coordinates for more precise outlines
+                            line.From = Vector2.new(fromPos.X, fromPos.Y)
+                            line.To = Vector2.new(toPos.X, toPos.Y)
                         else
                             line.Visible = false
                         end
@@ -58,25 +68,41 @@ local function CreateOutlineESP(player)
                 end)
             end
 
-            coroutine.wrap(UpdateOutline)()
+            coroutine.wrap(UpdateLine)()
+        end
+
+        -- Draw lines connecting the character parts to form an outline
+        if head and torso then
+            DrawOutlineLine(head, torso)
+        end
+        if torso and leftLeg then
+            DrawOutlineLine(torso, leftLeg)
+        end
+        if torso and rightLeg then
+            DrawOutlineLine(torso, rightLeg)
+        end
+        if torso and leftArm then
+            DrawOutlineLine(torso, leftArm)
+        end
+        if torso and rightArm then
+            DrawOutlineLine(torso, rightArm)
+        end
+        if leftLeg and rightLeg then
+            DrawOutlineLine(leftLeg, rightLeg)
+        end
+        if leftArm and rightArm then
+            DrawOutlineLine(leftArm, rightArm)
         end
     end
 
-    -- Attach the outline to the player's character
-    local function UpdateCharacter(player)
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            CreateCharacterOutline(player.Character)
-        end
-    end
-
-    -- Update outline if player spawns
+    -- Update outline when the character respawns
     player.CharacterAdded:Connect(function(character)
         CreateCharacterOutline(character)
     end)
 
-    -- Initially create the outline if the character already exists
+    -- Create the outline immediately if the player already has a character
     if player.Character then
-        UpdateCharacter(player)
+        CreateCharacterOutline(player.Character)
     end
 end
 
