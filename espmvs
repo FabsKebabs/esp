@@ -7,7 +7,7 @@ local function DrawLine()
     l.Visible = false
     l.From = Vector2.new(0, 0)
     l.To = Vector2.new(1, 1)
-    l.Color = Color3.fromRGB(0, 255, 255)  -- Cyan color
+    l.Color = Color3.fromRGB((0, 255, 255)
     l.Thickness = 1
     l.Transparency = 1
     return l
@@ -53,7 +53,6 @@ local function DrawESP(plr)
             RightLeg_LowerTorso = DrawLine()
         }
     end
-
     local function Visibility(state)
         for i, v in pairs(limbs) do
             v.Visible = state
@@ -194,23 +193,41 @@ local function DrawESP(plr)
                         local RUL = Camera:WorldToViewportPoint((plr.Character["Right Leg"].CFrame * CFrame.new(0, RL_Height, 0)).p)
                         local RLL = Camera:WorldToViewportPoint((plr.Character["Right Leg"].CFrame * CFrame.new(0, -RL_Height, 0)).p)
 
+                        -- Head
                         limbs.Head_Spine.From = Vector2.new(H.X, H.Y)
                         limbs.Head_Spine.To = Vector2.new(UT.X, UT.Y)
 
+                        --Spine
                         limbs.Spine.From = Vector2.new(UT.X, UT.Y)
                         limbs.Spine.To = Vector2.new(LT.X, LT.Y)
 
+                        --Left Arm
                         limbs.LeftArm.From = Vector2.new(LUA.X, LUA.Y)
                         limbs.LeftArm.To = Vector2.new(LLA.X, LLA.Y)
 
+                        limbs.LeftArm_UpperTorso.From = Vector2.new(UT.X, UT.Y)
+                        limbs.LeftArm_UpperTorso.To = Vector2.new(LUA.X, LUA.Y)
+
+                        --Right Arm
                         limbs.RightArm.From = Vector2.new(RUA.X, RUA.Y)
                         limbs.RightArm.To = Vector2.new(RLA.X, RLA.Y)
 
+                        limbs.RightArm_UpperTorso.From = Vector2.new(UT.X, UT.Y)
+                        limbs.RightArm_UpperTorso.To = Vector2.new(RUA.X, RUA.Y)
+
+                        --Left Leg
                         limbs.LeftLeg.From = Vector2.new(LUL.X, LUL.Y)
                         limbs.LeftLeg.To = Vector2.new(LLL.X, LLL.Y)
 
+                        limbs.LeftLeg_LowerTorso.From = Vector2.new(LT.X, LT.Y)
+                        limbs.LeftLeg_LowerTorso.To = Vector2.new(LUL.X, LUL.Y)
+
+                        --Right Leg
                         limbs.RightLeg.From = Vector2.new(RUL.X, RUL.Y)
                         limbs.RightLeg.To = Vector2.new(RLL.X, RLL.Y)
+
+                        limbs.RightLeg_LowerTorso.From = Vector2.new(LT.X, LT.Y)
+                        limbs.RightLeg_LowerTorso.To = Vector2.new(RUL.X, RUL.Y)
                     end
 
                     if limbs.Head_Spine.Visible ~= true then
@@ -235,13 +252,21 @@ local function DrawESP(plr)
         end)
     end
 
-    Colorize(Color3.fromRGB(0, 255, 255))  -- Set all limbs to cyan
-    if R15 then 
-        UpdaterR15()
+    if R15 then
+        coroutine.wrap(UpdaterR15)()
     else 
-        UpdaterR6()
+        coroutine.wrap(UpdaterR6)()
     end
 end
 
--- Call this function when you want to draw the ESP
--- Example: DrawESP(player)
+for i, v in pairs(game:GetService("Players"):GetPlayers()) do
+    if v.Name ~= Player.Name then
+        DrawESP(v)
+    end
+end
+
+game.Players.PlayerAdded:Connect(function(newplr)
+    if newplr.Name ~= Player.Name then
+        DrawESP(newplr)
+    end
+end)
