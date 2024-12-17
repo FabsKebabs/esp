@@ -1,0 +1,106 @@
+local Player = game:GetService("Players").LocalPlayer
+local Mouse = Player:GetMouse()
+local Camera = game:GetService("Workspace").CurrentCamera
+local RunService = game:GetService("RunService")
+
+-- Function to create a glowing outline around players or objects
+local function DrawGlowESP(target)
+    local glowOutline = Drawing.new("Line")
+    glowOutline.Visible = false
+    glowOutline.Color = Color3.fromRGB(255, 0, 0)  -- Glow color
+    glowOutline.Thickness = 3  -- Thickness of the outline
+    glowOutline.Transparency = 0.5  -- Transparency of the glow
+    glowOutline.ZIndex = 10  -- Ensure it's always on top
+
+    local function UpdateGlow()
+        local humanoidRootPart = target:FindFirstChild("HumanoidRootPart") or target:FindFirstChild("PrimaryPart")
+        if humanoidRootPart then
+            local screenPos, visible = Camera:WorldToViewportPoint(humanoidRootPart.Position)
+
+            if visible then
+                -- Convert the object's bounding box to screen space (for a more glowing effect)
+                local boxMin, boxMax = Camera:WorldToViewportPoint(humanoidRootPart.Position - humanoidRootPart.Size / 2), Camera:WorldToViewportPoint(humanoidRootPart.Position + humanoidRootPart.Size / 2)
+                
+                -- Set up the outline around the object
+                glowOutline.From = Vector2.new(boxMin.X, boxMin.Y)
+                glowOutline.To = Vector2.new(boxMax.X, boxMin.Y)
+                glowOutline.Visible = true
+
+                -- You can add more lines or rectangles to enhance the glow effect
+                local glowOutline2 = Drawing.new("Line")
+                glowOutline2.Visible = true
+                glowOutline2.Color = Color3.fromRGB(255, 0, 0)
+                glowOutline2.Thickness = 3
+                glowOutline2.Transparency = 0.5
+                glowOutline2.From = Vector2.new(boxMax.X, boxMin.Y)
+                glowOutline2.To = Vector2.new(boxMax.X, boxMax.Y)
+                glowOutline2.ZIndex = 10
+
+                -- Additional lines for a rectangular outline
+                local glowOutline3 = Drawing.new("Line")
+                glowOutline3.Visible = true
+                glowOutline3.Color = Color3.fromRGB(255, 0, 0)
+                glowOutline3.Thickness = 3
+                glowOutline3.Transparency = 0.5
+                glowOutline3.From = Vector2.new(boxMax.X, boxMax.Y)
+                glowOutline3.To = Vector2.new(boxMin.X, boxMax.Y)
+                glowOutline3.ZIndex = 10
+
+                local glowOutline4 = Drawing.new("Line")
+                glowOutline4.Visible = true
+                glowOutline4.Color = Color3.fromRGB(255, 0, 0)
+                glowOutline4.Thickness = 3
+                glowOutline4.Transparency = 0.5
+                glowOutline4.From = Vector2.new(boxMin.X, boxMax.Y)
+                glowOutline4.To = Vector2.new(boxMin.X, boxMin.Y)
+                glowOutline4.ZIndex = 10
+            else
+                glowOutline.Visible = false
+            end
+        else
+            glowOutline.Visible = false
+        end
+    end
+
+    -- Keep updating the glow until the target is removed
+    local connection
+    connection = RunService.RenderStepped:Connect(function()
+        if target and target.Parent then
+            UpdateGlow()
+        else
+            glowOutline.Visible = false
+            connection:Disconnect()
+        end
+    end)
+end
+
+-- Function to toggle the Glow ESP on and off
+local espEnabled = false
+local function ToggleGlowESP()
+    espEnabled = not espEnabled
+    if espEnabled then
+        for _, target in pairs(game:GetService("Players"):GetPlayers()) do
+            if target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                DrawGlowESP(target.Character)
+            end
+        end
+    end
+end
+
+-- Button to toggle the Glow ESP
+local toggleKey = Enum.KeyCode.G  -- You can change this to any key you want
+game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == toggleKey then
+        ToggleGlowESP()
+    end
+end)
+
+-- Initial glow for players
+game:GetService("Players").PlayerAdded:Connect(function(player)
+    if espEnabled then
+        player.CharacterAdded:Connect(function(character)
+            DrawGlowESP(character)
+        end)
+    end
+end)
