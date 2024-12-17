@@ -1,1 +1,69 @@
+local Player = game:GetService("Players").LocalPlayer
+local Mouse = Player:GetMouse()
+local Camera = game:GetService("Workspace").CurrentCamera
 
+local function DrawText()
+    local text = Drawing.new("Text")
+    text.Visible = false
+    text.Text = "Player Name"
+    text.Size = 20
+    text.Color = Color3.fromRGB(255, 0, 0)
+    text.Center = true
+    text.Outline = true
+    text.OutlineColor = Color3.fromRGB(0, 0, 0)
+    return text
+end
+
+local function DrawESP(plr)
+    repeat wait() until plr.Character ~= nil and plr.Character:FindFirstChild("Humanoid") ~= nil
+    local nameText = DrawText()
+
+    local function Visibility(state)
+        nameText.Visible = state
+    end
+
+    local function Updater()
+        local connection
+        connection = game:GetService("RunService").RenderStepped:Connect(function()
+            if plr.Character ~= nil and plr.Character:FindFirstChild("Humanoid") ~= nil and plr.Character:FindFirstChild("HumanoidRootPart") ~= nil and plr.Character.Humanoid.Health > 0 then
+                local HUM, vis = Camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
+                if vis then
+                    local headPosition = Camera:WorldToViewportPoint(plr.Character.Head.Position)
+                    nameText.Position = Vector2.new(headPosition.X, headPosition.Y - 40) -- Adjust the position to show the name above the head
+
+                    nameText.Text = plr.Name -- Set the player's name as the text
+
+                    if nameText.Visible ~= true then
+                        Visibility(true)
+                    end
+                else 
+                    if nameText.Visible ~= false then
+                        Visibility(false)
+                    end
+                end
+            else
+                if nameText.Visible ~= false then
+                    Visibility(false)
+                end
+                if game.Players:FindFirstChild(plr.Name) == nil then 
+                    nameText:Remove()
+                    connection:Disconnect()
+                end
+            end
+        end)
+    end
+
+    coroutine.wrap(Updater)()
+end
+
+for i, v in pairs(game:GetService("Players"):GetPlayers()) do
+    if v.Name ~= Player.Name then
+        DrawESP(v)
+    end
+end
+
+game.Players.PlayerAdded:Connect(function(newplr)
+    if newplr.Name ~= Player.Name then
+        DrawESP(newplr)
+    end
+end)
