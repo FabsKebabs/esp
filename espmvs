@@ -2,142 +2,67 @@ local Player = game:GetService("Players").LocalPlayer
 local Mouse = Player:GetMouse()
 local Camera = game:GetService("Workspace").CurrentCamera
 
--- Table to keep track of ESP lines for each player
-local espLines = {}
-
--- Settings for ESP lines
-local ESPSettings = {
-    Color = Color3.fromRGB(255, 0, 0),  -- Default color of ESP for enemy team (red)
-}
-
--- Function to create a drawing line
-local function DrawLine()
-    local l = Drawing.new("Line")
-    l.Visible = false
-    l.From = Vector2.new(0, 0)
-    l.To = Vector2.new(1, 1)
-    l.Color = ESPSettings.Color
-    l.Thickness = 1
-    l.Transparency = 1
-    return l
+local function DrawBubble()
+    local bubble = Drawing.new("Circle")
+    bubble.Visible = false
+    bubble.Radius = 50  -- The radius of the bubble, adjust as needed
+    bubble.Position = Vector2.new(0, 0)
+    bubble.Color = Color3.fromRGB(255, 0, 0)  -- Red bubble color
+    bubble.Thickness = 2
+    bubble.Transparency = 1
+    return bubble
 end
 
--- Function to draw skeleton for a player
-local function DrawSkeleton(player)
-    repeat wait() until player.Character ~= nil and player.Character:FindFirstChild("Humanoid") ~= nil
-    local limbs = {}
-    local R15 = (player.Character.Humanoid.RigType == Enum.HumanoidRigType.R15) and true or false
+local function DrawESP(plr)
+    repeat wait() until plr.Character ~= nil and plr.Character:FindFirstChild("Humanoid") ~= nil
+    local bubble = DrawBubble()
 
-    -- Set up limbs for R15 or R6 (simplified)
-    if R15 then
-        limbs = {
-            Head_UpperTorso = DrawLine(),
-            UpperTorso_LowerTorso = DrawLine(),
-            UpperTorso_LeftUpperArm = DrawLine(),
-            LeftUpperArm_LeftLowerArm = DrawLine(),
-            LeftLowerArm_LeftHand = DrawLine(),
-            UpperTorso_RightUpperArm = DrawLine(),
-            RightUpperArm_RightLowerArm = DrawLine(),
-            RightLowerArm_RightHand = DrawLine(),
-            LowerTorso_LeftUpperLeg = DrawLine(),
-            LeftUpperLeg_LeftLowerLeg = DrawLine(),
-            LeftLowerLeg_LeftFoot = DrawLine(),
-            LowerTorso_RightUpperLeg = DrawLine(),
-            RightUpperLeg_RightLowerLeg = DrawLine(),
-            RightLowerLeg_RightFoot = DrawLine(),
-        }
-    else
-        limbs = {
-            Head_Spine = DrawLine(),
-            Spine = DrawLine(),
-            LeftArm = DrawLine(),
-            LeftArm_UpperTorso = DrawLine(),
-            RightArm = DrawLine(),
-            RightArm_UpperTorso = DrawLine(),
-            LeftLeg = DrawLine(),
-            LeftLeg_LowerTorso = DrawLine(),
-            RightLeg = DrawLine(),
-            RightLeg_LowerTorso = DrawLine()
-        }
-    end
-
-    -- Function to update visibility of all lines
     local function Visibility(state)
-        for _, v in pairs(limbs) do
-            v.Visible = state
-        end
+        bubble.Visible = state
     end
 
-    -- Function to update color of all lines
-    local function Colorize(color)
-        for _, v in pairs(limbs) do
-            v.Color = color
-        end
-    end
-
-    -- Update function for R15
-    local function UpdaterR15()
+    local function Updater()
         local connection
         connection = game:GetService("RunService").RenderStepped:Connect(function()
-            if player.Character ~= nil and player.Character:FindFirstChild("Humanoid") ~= nil and player.Character:FindFirstChild("HumanoidRootPart") ~= nil and player.Character.Humanoid.Health > 0 then
-                local HUM, vis = Camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
+            if plr.Character ~= nil and plr.Character:FindFirstChild("Humanoid") ~= nil and plr.Character:FindFirstChild("HumanoidRootPart") ~= nil and plr.Character.Humanoid.Health > 0 then
+                local HUM, vis = Camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
                 if vis then
-                    -- Update positions for R15 parts (simplified example)
-                    local H = Camera:WorldToViewportPoint(player.Character.Head.Position)
-                    local UT = Camera:WorldToViewportPoint(player.Character.UpperTorso.Position)
-                    local LT = Camera:WorldToViewportPoint(player.Character.LowerTorso.Position)
-                    local LUA = Camera:WorldToViewportPoint(player.Character.LeftUpperArm.Position)
-                    local LLA = Camera:WorldToViewportPoint(player.Character.LeftLowerArm.Position)
-                    local LH = Camera:WorldToViewportPoint(player.Character.LeftHand.Position)
-                    local RUA = Camera:WorldToViewportPoint(player.Character.RightUpperArm.Position)
-                    local RLA = Camera:WorldToViewportPoint(player.Character.RightLowerArm.Position)
-                    local RH = Camera:WorldToViewportPoint(player.Character.RightHand.Position)
-                    local LUL = Camera:WorldToViewportPoint(player.Character.LeftUpperLeg.Position)
-                    local LLL = Camera:WorldToViewportPoint(player.Character.LeftLowerLeg.Position)
-                    local LF = Camera:WorldToViewportPoint(player.Character.LeftFoot.Position)
-                    local RUL = Camera:WorldToViewportPoint(player.Character.RightUpperLeg.Position)
-                    local RLL = Camera:WorldToViewportPoint(player.Character.RightLowerLeg.Position)
-                    local RF = Camera:WorldToViewportPoint(player.Character.RightFoot.Position)
+                    local position = Camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
 
-                    -- Set line positions for R15
-                    limbs.Head_UpperTorso.From = Vector2.new(H.X, H.Y)
-                    limbs.Head_UpperTorso.To = Vector2.new(UT.X, UT.Y)
+                    -- Update the position of the bubble to the character's position
+                    bubble.Position = Vector2.new(position.X, position.Y)
 
-                    limbs.UpperTorso_LowerTorso.From = Vector2.new(UT.X, UT.Y)
-                    limbs.UpperTorso_LowerTorso.To = Vector2.new(LT.X, LT.Y)
-
-                    -- Update other limbs similarly...
-                    -- Left arm, right arm, legs, etc.
+                    if bubble.Visible ~= true then
+                        Visibility(true)
+                    end
+                else
+                    if bubble.Visible ~= false then
+                        Visibility(false)
+                    end
                 end
             else
-                if player.Character == nil or player.Character.Humanoid.Health <= 0 then
+                if bubble.Visible ~= false then
                     Visibility(false)
+                end
+                if game.Players:FindFirstChild(plr.Name) == nil then
+                    bubble:Remove()
+                    connection:Disconnect()
                 end
             end
         end)
     end
 
-    -- Main function to update skeleton ESP
-    local function updateSkeletonESP()
-        if player.Character.Humanoid.RigType == Enum.HumanoidRigType.R15 then
-            UpdaterR15()
-        else
-            -- Implement R6 updates (not covered in this simplified example)
-        end
-    end
-
-    -- Start updating skeleton ESP
-    updateSkeletonESP()
+    coroutine.wrap(Updater)()
 end
 
--- Function to toggle ESP for all players
-local function ToggleESP()
-    for _, player in ipairs(game.Players:GetPlayers()) do
-        if player ~= Player then
-            DrawSkeleton(player)
-        end
+for i, v in pairs(game:GetService("Players"):GetPlayers()) do
+    if v.Name ~= Player.Name then
+        DrawESP(v)
     end
 end
 
--- Call ToggleESP to start drawing skeletons for all players
-ToggleESP()
+game.Players.PlayerAdded:Connect(function(newplr)
+    if newplr.Name ~= Player.Name then
+        DrawESP(newplr)
+    end
+end)
