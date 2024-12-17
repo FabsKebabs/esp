@@ -1,8 +1,51 @@
--- Example condition to check if the match is active (you can adjust based on your game logic)
-local ExpanderEnabled = true -- Match is active
 local LocalPlayer = game.Players.LocalPlayer
-local enemyTeam = nil -- You'll need to specify the enemy team here (e.g., check the player's team)
+local ExpanderEnabled = true -- Match is active
 
+-- Table to keep track of ESP markers for each player
+local espMarkers = {}
+
+-- Function to check if the player is currently in the match
+function isInMatch()
+    -- Replace with your logic to determine if the match is active
+    -- Example: Check if both teams exist
+    return LocalPlayer.Team ~= nil
+end
+
+-- Function to show the ESP
+function showESP(rootPart, player)
+    -- Check if the ESP marker already exists for this player
+    if not espMarkers[player.UserId] then
+        -- If the ESP marker doesn't exist, create it
+        local espMarker = Instance.new("Part")
+        espMarker.Size = Vector3.new(2, 2, 2)  -- Adjust size as needed
+        espMarker.Shape = Enum.PartType.Ball
+        espMarker.Color = Color3.fromRGB(255, 0, 0)  -- Example: red for enemy
+        espMarker.CanCollide = false
+        espMarker.Anchored = true
+        espMarker.Parent = game.Workspace
+        espMarker.Name = "ESPMarker"
+        
+        -- Save it to the espMarkers table
+        espMarkers[player.UserId] = espMarker
+    end
+    
+    -- Position the ESP marker above the player's root part
+    local espMarker = espMarkers[player.UserId]
+    espMarker.Position = rootPart.Position + Vector3.new(0, 3, 0)  -- Adjust Y offset as needed
+    espMarker.Transparency = 0.5  -- Adjust transparency if you want
+end
+
+-- Function to hide the ESP
+function hideESP(player)
+    -- Check if the ESP marker exists for this player
+    local espMarker = espMarkers[player.UserId]
+    if espMarker then
+        espMarker:Destroy()
+        espMarkers[player.UserId] = nil  -- Remove from the table
+    end
+end
+
+-- Main function to update ESP
 function updateESP()
     while ExpanderEnabled do
         wait(0.1)
@@ -13,54 +56,25 @@ function updateESP()
                 -- Ensure it's not the local player and it's an enemy player
                 if player ~= LocalPlayer and player.Team ~= LocalPlayer.Team then
                     local character = player.Character
-                    local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-                    if rootPart then
-                        showESP(rootPart)  -- Show ESP on enemy players
+                    if character then
+                        local rootPart = character:FindFirstChild("HumanoidRootPart")
+                        if rootPart then
+                            -- Show the ESP for the enemy player
+                            showESP(rootPart, player)
+                        end
                     end
                 end
             end
         else
-            -- If we're not in a match, hide ESP
-            hideESP()
+            -- If not in a match, hide ESP for all players
+            for _, player in ipairs(game.Players:GetPlayers()) do
+                if player.Team ~= LocalPlayer.Team then
+                    hideESP(player)
+                end
+            end
         end
     end
 end
 
--- Function to check if the player is currently in the match
-function isInMatch()
-    -- Add your own logic here to determine if the match is active
-    -- For example, check if the game has started or if teams are set up
-    return game:GetService("Players").LocalPlayer.Team ~= nil
-end
-
--- Function to show the ESP
-function showESP(rootPart)
-    -- Create or update the ESP here
-    local espMarker = rootPart:FindFirstChild("ESPMarker")
-    
-    if not espMarker then
-        -- If the ESP marker doesn't exist, create it
-        espMarker = Instance.new("Part")
-        espMarker.Size = Vector3.new(1, 1, 1)  -- Adjust size as needed
-        espMarker.Shape = Enum.PartType.Ball
-        espMarker.Color = Color3.fromRGB(255, 0, 0)  -- Example: red for enemy
-        espMarker.CanCollide = false
-        espMarker.Anchored = true
-        espMarker.Parent = game.Workspace
-        espMarker.Name = "ESPMarker"
-    end
-    
-    -- Position the ESP marker above the player's root part
-    espMarker.Position = rootPart.Position + Vector3.new(0, 3, 0)  -- Adjust Y offset as needed
-    espMarker.Transparency = 0.5  -- Adjust transparency if you want
-end
-
--- Function to hide the ESP
-function hideESP()
-    -- Loop through and remove all ESP markers
-    for _, marker in ipairs(game.Workspace:GetChildren()) do
-        if marker.Name == "ESPMarker" then
-            marker:Destroy()
-        end
-    end
-end
+-- Start updating the ESP
+updateESP()
